@@ -10,7 +10,17 @@ const (
 
 	// Operators
 	ASSIGN TokenType = "="
+	EQ     TokenType = "=="
+	NOT_EQ TokenType = "!="
 	PLUS   TokenType = "+"
+
+	MINUS    TokenType = "-"
+	BANG     TokenType = "!"
+	ASTERISK TokenType = "*"
+	SLASH    TokenType = "/"
+
+	LT TokenType = "<"
+	GT TokenType = ">"
 
 	// Delimiters
 	COMMA     TokenType = ","
@@ -23,9 +33,32 @@ const (
 	// Keywords
 	FUNCTION TokenType = "FUNCTION"
 	LET      TokenType = "LET"
+	IF       TokenType = "IF"
+	ELSE     TokenType = "ELSE"
+	RETURN   TokenType = "RETURN"
+	TRUE     TokenType = "TRUE"
+	FALSE    TokenType = "FALSE"
 )
+
+var KeyWords = map[string]TokenType{
+	"fn":     FUNCTION,
+	"let":    LET,
+	"if":     IF,
+	"else":   ELSE,
+	"return": RETURN,
+	"true":   TRUE,
+	"false":  FALSE,
+}
 
 type Token struct {
 	Type    TokenType
 	Literal string
+}
+
+func LookupIdent(ident string) TokenType {
+	if tok, ok := KeyWords[ident]; ok {
+		return tok
+	} else {
+		return IDENT
+	}
 }
