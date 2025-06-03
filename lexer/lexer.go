@@ -106,9 +106,12 @@ func (l *Lexer) NextToken() token.Token {
 
 func (l *Lexer) readIdentifier() string {
 	startPosition := l.position
-	for isLetter(l.ch) {
+
+	// Read all valid identifier characters (first must be a letter, checked before calling this)
+	for isLetter(l.ch) || isDigit(l.ch) {
 		l.readChar()
 	}
+
 	return l.input[startPosition:l.position]
 }
 
