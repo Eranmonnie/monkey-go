@@ -7,6 +7,7 @@ const (
 	EOF     TokenType = "EOF"
 	IDENT   TokenType = "IDENT"
 	INT     TokenType = "INT"
+	STRING            = "STRING"
 
 	// Operators
 	ASSIGN TokenType = "="
