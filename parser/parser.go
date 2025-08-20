@@ -18,6 +18,7 @@ type (
 const (
 	_ int = iota
 	LOWEST
+	ASSIGN
 	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
@@ -38,6 +39,7 @@ var precedences = map[token.TokenType]int{
 	token.ASTERISK: PRODUCT,
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
+	token.ASSIGN:   ASSIGN,
 }
 
 type Parser struct {
@@ -75,6 +77,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
 	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
 	p.registerInfix(token.EQ, p.parseInfixExpression)
+	p.registerInfix(token.ASSIGN, p.parseInfixExpression)
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
@@ -224,17 +227,36 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
-	expression := &ast.InfixExpression{
+	if p.curTokenIs(token.ASSIGN) {
+		// Check if left is an identifier
+		ident, ok := left.(*ast.Identifier)
+		if !ok {
+			msg := fmt.Sprintf("assignment target must be an identifier, got %T", left)
+			p.errors = append(p.errors, msg)
+			return nil
+		}
+
+		assignToken := p.curToken // Save the '=' token
+		p.nextToken()             // Move to the value expression
+
+		return &ast.AssignmentExpression{
+			Token: assignToken,
+			Name:  ident,
+			Value: p.parseExpression(LOWEST),
+		}
+	}
+
+	// Handle other infix expressions
+	infix := &ast.InfixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
 		Left:     left,
 	}
 	precedence := p.curPrecedence()
 	p.nextToken()
-	expression.Right = p.parseExpression(precedence)
-	return expression
+	infix.Right = p.parseExpression(precedence)
+	return infix
 }
-
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
 	p.errors = append(p.errors, msg)
