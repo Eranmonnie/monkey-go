@@ -30,6 +30,8 @@ const (
 	RPAREN    TokenType = ")"
 	LBRACE    TokenType = "{"
 	RBRACE    TokenType = "}"
+	LBRACKET            = "["
+	RBRACKET            = "]"
 
 	// Keywords
 	FUNCTION TokenType = "FUNCTION"
