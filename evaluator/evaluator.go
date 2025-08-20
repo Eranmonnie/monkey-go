@@ -86,8 +86,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(val) {
 			return val
 		}
-		if _, ok := env.Get(node.Name.Value); !ok {
+
+		obj, ok := env.Get(node.Name.Value)
+		if !ok {
 			return newError("assignment to undeclared identifier: %s", node.Name.Value)
+		}
+		if obj.Type() != val.Type() {
+			return newError("cannot assign variable of type %s a value of type %s", obj.Type(), val.Type())
 		}
 		env.Set(node.Name.Value, val)
 		return val
