@@ -172,7 +172,10 @@ func evalArrayIndexAssignment(array *object.Array, index object.Object, value ob
 	if i < 0 || i >= int64(len(array.Elements)) {
 		return newError("array index out of bounds: %d", i)
 	}
-
+	element := array.Elements[i]
+	if element.Type() != value.Type() {
+		return newError("cannot assign array element of type %s a value of type %s", element.Type(), value.Type())
+	}
 	array.Elements[i] = value
 	return value
 }
@@ -184,6 +187,12 @@ func evalHashIndexAssignment(hash *object.Hash, index object.Object, value objec
 	}
 
 	hashKey := key.HashKey()
+	existingPair, _ := hash.Pairs[hashKey]
+
+	if existingPair.Value.Type() != value.Type() {
+		return newError("cannot assign hash value of type %s a value of type %s", existingPair.Value.Type(), value.Type())
+	}
+
 	hash.Pairs[hashKey] = object.HashPair{Key: index, Value: value}
 	return value
 }
