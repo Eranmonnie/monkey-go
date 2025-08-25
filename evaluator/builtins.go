@@ -1,6 +1,10 @@
 package evaluator
 
-import "github.com/Eranmonnie/go-interpreter/object"
+import (
+	"fmt"
+
+	"github.com/Eranmonnie/go-interpreter/object"
+)
 
 var builtins = map[string]*object.Builtin{
 	"len": {
@@ -89,6 +93,14 @@ var builtins = map[string]*object.Builtin{
 			arr := args[0].(*object.Array)
 			arr.Elements = append(arr.Elements, args[1])
 			return arr
+		},
+	},
+	"puts": {
+		Fn: func(args ...object.Object) object.Object {
+			for _, arg := range args {
+				fmt.Println(arg.Inspect())
+			}
+			return NULL
 		},
 	},
 }
