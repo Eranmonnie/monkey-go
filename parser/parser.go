@@ -251,9 +251,9 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	if p.curTokenIs(token.ASSIGN) {
-		// Check if left is an identifier
-		ident, ok := left.(*ast.Identifier)
-		if !ok {
+		switch left.(type) {
+		case *ast.Identifier, *ast.IndexExpression:
+		default:
 			msg := fmt.Sprintf("assignment target must be an identifier, got %T", left)
 			p.errors = append(p.errors, msg)
 			return nil
@@ -263,9 +263,9 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 		p.nextToken()             // Move to the value expression
 
 		return &ast.AssignmentExpression{
-			Token: assignToken,
-			Name:  ident,
-			Value: p.parseExpression(LOWEST),
+			Token:  assignToken,
+			Target: left,
+			Value:  p.parseExpression(LOWEST),
 		}
 	}
 

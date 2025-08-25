@@ -81,23 +81,31 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return applyFunction(function, args)
 
 	case *ast.AssignmentExpression:
-		if node.Name == nil {
-			return newError("assignment to non-variable")
-		}
 		val := Eval(node.Value, env)
 		if isError(val) {
 			return val
 		}
 
-		obj, ok := env.Get(node.Name.Value)
-		if !ok {
-			return newError("assignment to undeclared identifier: %s", node.Name.Value)
+		switch target := node.Target.(type) {
+		case *ast.Identifier:
+			// Handle identifier assignment (existing logic)
+			obj, ok := env.Get(target.Value)
+			if !ok {
+				return newError("assignment to undeclared identifier: %s", target.Value)
+			}
+			if obj.Type() != val.Type() {
+				return newError("cannot assign variable of type %s a value of type %s", obj.Type(), val.Type())
+			}
+			env.Set(target.Value, val)
+			return val
+
+		case *ast.IndexExpression:
+			// Handle indexed assignment
+			return evalIndexAssignment(target, val, env)
+
+		default:
+			return newError("invalid assignment target: %T", target)
 		}
-		if obj.Type() != val.Type() {
-			return newError("cannot assign variable of type %s a value of type %s", obj.Type(), val.Type())
-		}
-		env.Set(node.Name.Value, val)
-		return val
 	case *ast.InfixExpression:
 		left := Eval(node.Left, env)
 		if isError(left) {
@@ -131,6 +139,53 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	}
 
 	return nil
+}
+
+func evalIndexAssignment(indexExpr *ast.IndexExpression, value object.Object, env *object.Environment) object.Object {
+	left := Eval(indexExpr.Left, env)
+	if isError(left) {
+		return left
+	}
+
+	index := Eval(indexExpr.Index, env)
+	if isError(index) {
+		return index
+	}
+
+	switch obj := left.(type) {
+	case *object.Array:
+		return evalArrayIndexAssignment(obj, index, value)
+	case *object.Hash:
+		return evalHashIndexAssignment(obj, index, value)
+	default:
+		return newError("index assignment not supported on %s", left.Type())
+	}
+}
+
+func evalArrayIndexAssignment(array *object.Array, index object.Object, value object.Object) object.Object {
+	idx, ok := index.(*object.Integer)
+	if !ok {
+		return newError("array index must be integer, got %s", index.Type())
+	}
+
+	i := idx.Value
+	if i < 0 || i >= int64(len(array.Elements)) {
+		return newError("array index out of bounds: %d", i)
+	}
+
+	array.Elements[i] = value
+	return value
+}
+
+func evalHashIndexAssignment(hash *object.Hash, index object.Object, value object.Object) object.Object {
+	key, ok := index.(object.Hashable)
+	if !ok {
+		return newError("unusable as hash key: %s", index.Type())
+	}
+
+	hashKey := key.HashKey()
+	hash.Pairs[hashKey] = object.HashPair{Key: index, Value: value}
+	return value
 }
 
 func evalIndexExpression(left, index object.Object) object.Object {

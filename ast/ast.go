@@ -93,9 +93,9 @@ func (ls *LetStatement) statementNode()       {}
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
 
 type AssignmentExpression struct {
-	Token token.Token // The '=' token
-	Name  *Identifier
-	Value Expression
+	Token  token.Token // The '=' token
+	Target Expression
+	Value  Expression
 }
 
 func (ae *AssignmentExpression) expressionNode()      {}
@@ -103,7 +103,7 @@ func (ae *AssignmentExpression) TokenLiteral() string { return ae.Token.Literal 
 func (ae *AssignmentExpression) String() string {
 	var out bytes.Buffer
 	out.WriteString("(")
-	out.WriteString(ae.Name.String())
+	out.WriteString(ae.Target.String())
 	out.WriteString(" = ")
 	out.WriteString(ae.Value.String())
 	out.WriteString(")")
