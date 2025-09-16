@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Eranmonnie/go-interpreter/evaluator"
-	"github.com/Eranmonnie/go-interpreter/object"
+	"github.com/Eranmonnie/go-interpreter/compiler"
 	"github.com/Eranmonnie/go-interpreter/parser"
+	"github.com/Eranmonnie/go-interpreter/vm"
 
 	"github.com/Eranmonnie/go-interpreter/lexer"
 )
@@ -29,23 +29,14 @@ const MONKEY_FACE = `
 `
 
 func Start(in io.Reader, out io.Writer) {
-
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
-
 	for {
-		fmt.Print(PROMPT)
+		fmt.Fprintf(out, PROMPT)
 		scanned := scanner.Scan()
 		if !scanned {
 			return
 		}
-
 		line := scanner.Text()
-		if line == "exit" {
-			fmt.Println("Exiting REPL...")
-			return
-		}
-
 		l := lexer.New(line)
 		p := parser.New(l)
 		program := p.ParseProgram()
@@ -53,13 +44,21 @@ func Start(in io.Reader, out io.Writer) {
 			printParserErrors(out, p.Errors())
 			continue
 		}
-
-		evaluated := evaluator.Eval(program, env)
-
-		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
+		comp := compiler.New()
+		err := comp.Compile(program)
+		if err != nil {
+			fmt.Fprintf(out, "Woops! Compilation failed:\n %s\n", err)
+			continue
 		}
+		machine := vm.New(comp.Bytecode())
+		err = machine.Run()
+		if err != nil {
+			fmt.Fprintf(out, "Woops! Executing bytecode failed:\n %s\n", err)
+			continue
+		}
+		lastPopped := machine.LastPoppedStackElem()
+		io.WriteString(out, lastPopped.Inspect())
+		io.WriteString(out, "\n")
 	}
 }
 
