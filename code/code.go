@@ -17,6 +17,11 @@ const (
 	OpSub
 	OpMul
 	OpDiv
+	OpTrue
+	OpFalse
+	OpEqual
+	OpNotEqual
+	OpGreaterThan
 )
 
 type Definition struct {
@@ -47,6 +52,26 @@ var definitions = map[OpCode]*Definition{
 	},
 	OpDiv: {
 		Name:          "OpDiv",
+		OperandWidths: []int{},
+	},
+	OpTrue: {
+		Name:          "OpTrue",
+		OperandWidths: []int{},
+	},
+	OpFalse: {
+		Name:          "OpFalse",
+		OperandWidths: []int{},
+	},
+	OpEqual: {
+		Name:          "OpEqual",
+		OperandWidths: []int{},
+	},
+	OpNotEqual: {
+		Name:          "OpNotEqual",
+		OperandWidths: []int{},
+	},
+	OpGreaterThan: {
+		Name:          "OpGreaterThan",
 		OperandWidths: []int{},
 	},
 }
