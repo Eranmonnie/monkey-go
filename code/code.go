@@ -22,6 +22,8 @@ const (
 	OpEqual
 	OpNotEqual
 	OpGreaterThan
+	OpMinus
+	OpBang
 )
 
 type Definition struct {
@@ -72,6 +74,14 @@ var definitions = map[OpCode]*Definition{
 	},
 	OpGreaterThan: {
 		Name:          "OpGreaterThan",
+		OperandWidths: []int{},
+	},
+	OpBang: {
+		Name:          "OpBang",
+		OperandWidths: []int{},
+	},
+	OpMinus: {
+		Name:          "OpMinus",
 		OperandWidths: []int{},
 	},
 }
