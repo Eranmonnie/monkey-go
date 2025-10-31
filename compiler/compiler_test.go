@@ -256,10 +256,14 @@ if (true) { 10 }; 3333;
 				// 0004
 				code.Make(code.OpConstant, 0),
 				// 0007
-				code.Make(code.OpPop),
-				// 0008
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpJump, 11),
+				// 0010
+				code.Make(code.OpNull),
 				// 0011
+				code.Make(code.OpPop),
+				// 0012
+				code.Make(code.OpConstant, 1),
+				// 0015
 				code.Make(code.OpPop),
 			},
 		},
