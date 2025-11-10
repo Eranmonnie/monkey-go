@@ -19,6 +19,7 @@ type Compiler struct {
 	constants           []object.Object
 	lastInstruction     EmittedInstruction
 	previousInstruction EmittedInstruction
+	symbolTable         *SymbolTable
 }
 
 type Bytecode struct {
@@ -32,7 +33,15 @@ func New() *Compiler {
 		constants:           []object.Object{},
 		lastInstruction:     EmittedInstruction{},
 		previousInstruction: EmittedInstruction{},
+		symbolTable:         NewSymbolTable(),
 	}
+}
+
+func NewWithState(s *SymbolTable, constants []object.Object) *Compiler {
+	compiler := New()
+	compiler.symbolTable = s
+	compiler.constants = constants
+	return compiler
 }
 
 func (c *Compiler) Compile(node ast.Node) error {
@@ -51,6 +60,43 @@ func (c *Compiler) Compile(node ast.Node) error {
 				return err
 			}
 		}
+
+	case *ast.LetStatement:
+		err := c.Compile(node.Value)
+		if err != nil {
+			return err
+		}
+		symbol := c.symbolTable.Define(node.Name.Value)
+		c.emit(code.OpSetGlobal, symbol.Index)
+
+	case *ast.AssignmentExpression:
+		err := c.Compile(node.Value)
+		if err != nil {
+			return err
+		}
+
+		//get the target identifier
+		ident, ok := node.Target.(*ast.Identifier)
+		if !ok {
+			return fmt.Errorf("invalid assignment target")
+		}
+
+		// Look up the symbol
+		symbol, ok := c.symbolTable.Resolve(ident.Value)
+
+		if !ok {
+			return fmt.Errorf("undefined variable: %s", ident.Value)
+		}
+
+		// Emit OpAssignGlobal with the symbol index
+		c.emit(code.OpAssignGlobal, symbol.Index)
+
+	case *ast.Identifier:
+		symbol, ok := c.symbolTable.Resolve(node.Value)
+		if !ok {
+			return fmt.Errorf("undefined variable %s", node.Value)
+		}
+		c.emit(code.OpGetGlobal, symbol.Index)
 
 	case *ast.ExpressionStatement:
 		err := c.Compile(node.Expression)
